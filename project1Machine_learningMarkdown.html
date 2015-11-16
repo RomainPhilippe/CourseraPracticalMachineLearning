@@ -98,6 +98,7 @@ training&lt;-subsetTraining[inTrain,]
 testing&lt;-subsetTraining[-inTrain,]</code></pre>
 <p>Yet, there are still too much regressors so we decide to ignore columns with lots of NA. The number of columns after : 54.</p>
 <p>To end the cleaning of the data, we decide to remove the first five columns which are name and date of the exercices. It is a non-sense to put these columns into my model, it could overfit the model.</p>
+<p>We divide our dataset into groups with a probability equals to 0.7</p>
 </div>
 <div id="model-and-cross-validation" class="section level2">
 <h2>2. Model and cross validation</h2>
@@ -151,9 +152,10 @@ confusionMatrix</code></pre>
 ## Detection Rate         0.2845   0.1934   0.1740   0.1630   0.1823
 ## Detection Prevalence   0.2846   0.1942   0.1747   0.1636   0.1828
 ## Balanced Accuracy      0.9999   0.9990   0.9986   0.9970   0.9955</code></pre>
+<p>We can observe that we have a very good accuracy.</p>
 </div>
-<div id="error-in-our-model" class="section level2">
-<h2>3. Error in our model</h2>
+<div id="plot-and-error-in-our-model" class="section level2">
+<h2>3. Plot and error in our model</h2>
 <p>Now we can extract the principal components of the model and plot it.</p>
 <pre class="r"><code>gbmImp &lt;- varImp(rfModel)
 plot(gbmImp, top = 4)</code></pre>
@@ -167,7 +169,7 @@ featurePlot(x=training[,rownames(gbmImp$importance)[1:4]],y=training$classe,plot
 </div>
 <div id="submission-with-the-testing-dataset" class="section level2">
 <h2>4. Submission with the testing dataset</h2>
-<p>We have to apply a similar processing, that is to say we remove the columns (nearZeroVar, columns with lots of NA, and name /date)</p>
+<p>We have to apply a similar processing, that is to say we remove the columns (nearZeroVar, columns with lots of NA, and name /date). Then we display our prediction.</p>
 <pre class="r"><code>#prediction testing dataset =&gt;Submission
 pmlTesting&lt;-read.csv2(&quot;pml-testing.csv&quot;, sep=&quot;,&quot;)
 pmlTesting[,7:159] &lt;- sapply(pmlTesting[,7:159],as.numeric)
@@ -176,11 +178,14 @@ subsetTesting&lt;-pmlTesting[,-vectorIndex]
 subsetTesting&lt;-subsetTesting[, colSums(is.na(subsetTesting)) != nrow(subsetTesting)]
 subsetTesting&lt;-subsetTesting[,c(-1,-2,-3,-4,-5)]
 
-predictions&lt;-predict(rfModel,subsetTesting)</code></pre>
+predictions&lt;-predict(rfModel,subsetTesting)
+predictions</code></pre>
+<pre><code>##  [1] B A A A A E A A A A A A D A A A A B B A
+## Levels: A B C D E</code></pre>
 <pre class="r"><code>pml_write_files = function(x){
   n = length(x)
   for(i in 1:n){
-    filename = paste0(&quot;problemeTesting4//problem_id_&quot;,i,&quot;.txt&quot;)
+    filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
     write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
   }
 }

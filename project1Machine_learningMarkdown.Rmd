@@ -49,6 +49,8 @@ Yet, there are still too much regressors so we decide to ignore columns with lot
 
 To end the cleaning of the data, we decide to remove the first five columns which are name and date of the exercices. It is a non-sense to put these columns into my model, it could overfit the model.
 
+We divide our dataset into groups with a probability equals to 0.7
+
 ##2. Model and cross validation
 
 We use the train command with the default method => random forest and we define trControl option with the "cv" value for cross validation.
@@ -70,7 +72,9 @@ confusionMatrix<-confusionMatrix(predictions,testing$classe)
 confusionMatrix
 ```
 
-##3. Error in our model
+We can observe that we have a very good accuracy.
+
+##3. Plot and error in our model
 
 Now we can extract the principal components of the model and plot it.
 
@@ -90,7 +94,7 @@ Accuracy : `r accuracy`
 
 ##4. Submission with the testing dataset
 
-We have to apply a similar processing, that is to say we remove the columns (nearZeroVar, columns with lots of NA, and name /date)
+We have to apply a similar processing, that is to say we remove the columns (nearZeroVar, columns with lots of NA, and name /date). Then we display our prediction.
 
 
 ```{r}
@@ -103,7 +107,7 @@ subsetTesting<-subsetTesting[, colSums(is.na(subsetTesting)) != nrow(subsetTesti
 subsetTesting<-subsetTesting[,c(-1,-2,-3,-4,-5)]
 
 predictions<-predict(rfModel,subsetTesting)
-
+as.character(predictions)
 
 ```
 
@@ -111,7 +115,7 @@ predictions<-predict(rfModel,subsetTesting)
 pml_write_files = function(x){
   n = length(x)
   for(i in 1:n){
-    filename = paste0("problemeTesting4//problem_id_",i,".txt")
+    filename = paste0("problem_id_",i,".txt")
     write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
   }
 }
