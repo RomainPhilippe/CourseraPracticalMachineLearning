@@ -1,0 +1,120 @@
+---
+title: "Assignement Coursera Practical machine learning"
+author: "PHILIPPE Romain"
+date: "15 novembre 2015"
+output: html_document
+---
+
+The goal of this project is to predict the manner in which people do the exercises. This exercises are divided in 5 classes : A,B,C,D and E.
+In this project, I will define the model I build, how I use cross validation, what is the sample error and I will explain my choices.
+
+The first line of my code is set.seed() function, in order to have a reproducible experience.
+
+##1. Exploratory
+
+
+```{r cache=TRUE}
+set.seed(123333)
+setwd("C:/Users/Romain/Documents/MOOC/Machine learning/project1")
+pmlTraining<-read.csv2("pml-training.csv", sep=",")
+library(caret)
+library(dplyr)
+
+pmlTraining[,7:159] <- sapply(pmlTraining[,7:159],as.numeric)
+
+vectorIndex<-nearZeroVar(pmlTraining,saveMetrics=F)
+subsetTraining<-pmlTraining[,-vectorIndex]
+ncol<-ncol(subsetTraining)
+```
+
+After loading the provided dataset, I noticed that there is a lot of regressors, about 160. So we have to reduce this regressors. The first method is to use the nearZeroVar command. And we remove this columns of the dataset.The number of columns after : `r ncol`.
+
+
+
+```{r}
+library(caret)
+#removing columns with lots of NA
+subsetTraining<-subsetTraining[, colSums(is.na(subsetTraining)) < 10000]
+dim(subsetTraining)
+subsetTraining<-subsetTraining[,c(-1,-2,-3,-4,-5)]
+ncol<-ncol(subsetTraining)
+
+inTrain<-createDataPartition(y=subsetTraining$classe,p=0.7,list=FALSE)
+training<-subsetTraining[inTrain,]
+testing<-subsetTraining[-inTrain,]
+
+```
+
+Yet, there are still too much regressors so we decide to ignore columns with lots of NA. The number of columns after : `r ncol`.
+
+To end the cleaning of the data, we decide to remove the first five columns which are name and date of the exercices. It is a non-sense to put these columns into my model, it could overfit the model.
+
+##2. Model and cross validation
+
+We use the train command with the default method => random forest and we define trControl option with the "cv" value for cross validation.
+
+```{r cache=TRUE}
+
+library(randomForest)
+rfModel <- train(classe ~ ., method = "rf", data = training, importance = T, 
+               trControl = trainControl(method = "cv", number = 3))
+
+```
+
+Then, we apply our model to the test dataset:
+
+```{r}
+
+predictions<-predict(rfModel,testing)
+confusionMatrix<-confusionMatrix(predictions,testing$classe)
+confusionMatrix
+```
+
+##3. Error in our model
+
+Now we can extract the principal components of the model and plot it.
+
+```{r}
+gbmImp <- varImp(rfModel)
+plot(gbmImp, top = 4)
+
+
+accuracy<-confusionMatrix$overall[1]
+error<-rfModel$finalModel
+
+featurePlot(x=training[,rownames(gbmImp$importance)[1:4]],y=training$classe,plot="pairs")
+```
+
+Accuracy : `r accuracy`
+
+
+##4. Submission with the testing dataset
+
+We have to apply a similar processing, that is to say we remove the columns (nearZeroVar, columns with lots of NA, and name /date)
+
+
+```{r}
+#prediction testing dataset =>Submission
+pmlTesting<-read.csv2("pml-testing.csv", sep=",")
+pmlTesting[,7:159] <- sapply(pmlTesting[,7:159],as.numeric)
+
+subsetTesting<-pmlTesting[,-vectorIndex]
+subsetTesting<-subsetTesting[, colSums(is.na(subsetTesting)) != nrow(subsetTesting)]
+subsetTesting<-subsetTesting[,c(-1,-2,-3,-4,-5)]
+
+predictions<-predict(rfModel,subsetTesting)
+
+
+```
+
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problemeTesting4//problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(as.character(predictions))
+```
+
