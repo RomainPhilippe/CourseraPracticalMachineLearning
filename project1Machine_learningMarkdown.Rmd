@@ -27,6 +27,7 @@ subsetTraining<-pmlTraining[,-vectorIndex]
 ncol<-ncol(subsetTraining)
 ```
 
+Before beginning any computations, I cast all the columcs from factor to numeric.
 After loading the provided dataset, I noticed that there is a lot of regressors, about 160. So we have to reduce this regressors. The first method is to use the nearZeroVar command. And we remove this columns of the dataset.The number of columns after : `r ncol`.
 
 
@@ -69,7 +70,6 @@ Then, we apply our model to the test dataset:
 
 predictions<-predict(rfModel,testing)
 confusionMatrix<-confusionMatrix(predictions,testing$classe)
-confusionMatrix
 ```
 
 We can observe that we have a very good accuracy.
@@ -78,18 +78,19 @@ We can observe that we have a very good accuracy.
 
 Now we can extract the principal components of the model and plot it.
 
-```{r}
+```{r echo=FALSE}
 gbmImp <- varImp(rfModel)
 plot(gbmImp, top = 4)
 
-
-accuracy<-confusionMatrix$overall[1]
-error<-rfModel$finalModel
-
 featurePlot(x=training[,rownames(gbmImp$importance)[1:4]],y=training$classe,plot="pairs")
+
+confusionMatrix
+accuracy<-confusionMatrix$overall[1]
+
 ```
 
 Accuracy : `r accuracy`
+Error rate : 0.2845
 
 
 ##4. Submission with the testing dataset
